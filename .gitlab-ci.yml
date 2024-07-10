@@ -4,7 +4,7 @@ stages:
   - deploy
 
 variables:
-  FLASK_ENV: 'production'
+  FLASK_ENV: 'production'  # Default environment variable
 
 # Job to build and test the application
 build_and_test:
@@ -21,8 +21,8 @@ build_and_test:
   tags:
     - practice-1
 
-# Job to deploy to a test environment
-deploy_to_test:
+# Job to deploy to development environment
+Dev:
   stage: deploy
   image: google/cloud-sdk:alpine
   before_script:
@@ -30,13 +30,37 @@ deploy_to_test:
     - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
     - gcloud config set project your-project-id
   script:
-    - echo "Deploying to test environment..."
-    - gcloud app deploy --quiet
+    - echo "Deploying to development environment..."
+    - gcloud app deploy --quiet --version dev
+  environment:
+    name: development
+    url: https://dev.example.com  # URL for the dev environment
+  only:
+    - develop
+  tags:
+    - practice-1
+
+# Job to deploy to testing environment
+Test:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
+    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
+    - gcloud config set project your-project-id
+  script:
+    - echo "Deploying to testing environment..."
+    - gcloud app deploy --quiet --version test
+  environment:
+    name: testing
+    url: https://test.example.com  # URL for the test environment
+  only:
+    - merge_requests
   tags:
     - practice-1
 
 # Job to deploy to production environment
-deploy_to_production:
+Prod:
   stage: deploy
   image: google/cloud-sdk:alpine
   before_script:
@@ -45,7 +69,10 @@ deploy_to_production:
     - gcloud config set project your-project-id
   script:
     - echo "Deploying to production environment..."
-    - gcloud app deploy --quiet
+    - gcloud app deploy --quiet --version prod
+  environment:
+    name: production
+    url: https://www.example.com  # URL for the production environment
   only:
     - main
   tags:
