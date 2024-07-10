@@ -1,18 +1,16 @@
 stages:
   - build
-  - tests
+  - test
   - deploy
 
 variables:
   FLASK_ENV: 'production'  # Default environment variable
 
-# Job to build and tests the application
 build_and_test:
   stage: build
-  image: python:3.9
   script:
-    - pip install -r requirements.txt
-    - pytest tests/
+    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
+    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pytest tests/'
   artifacts:
     paths:
       - tests/report.xml
@@ -21,17 +19,12 @@ build_and_test:
   tags:
     - practice-1
 
-# Job to deploy to development environment
-dev:
+deploy_to_dev:
   stage: deploy
-  image: google/cloud-sdk:alpine
-  before_script:
-    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
-    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
-    - gcloud config set project your-project-id
   script:
-    - echo "Deploying to development environment..."
-    - gcloud app deploy --quiet --version dev
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd auth activate-service-account --key-file C:\Path\To\gcloud-key.json'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd config set project your-project-id'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd app deploy --quiet --version dev'
   environment:
     name: development
     url: https://dev.example.com  # URL for the dev environment
@@ -40,36 +33,26 @@ dev:
   tags:
     - practice-1
 
-# Job to deploy to testing environment
-test:
+deploy_to_test:
   stage: deploy
-  image: google/cloud-sdk:alpine
-  before_script:
-    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
-    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
-    - gcloud config set project your-project-id
   script:
-    - echo "Deploying to testing environment..."
-    - gcloud app deploy --quiet --version tests
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd auth activate-service-account --key-file C:\Path\To\gcloud-key.json'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd config set project your-project-id'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd app deploy --quiet --version test'
   environment:
     name: testing
-    url: https://test.example.com  # URL for the tests environment
+    url: https://test.example.com  # URL for the test environment
   only:
     - merge_requests
   tags:
     - practice-1
 
-# Job to deploy to production environment
-prod:
+deploy_to_prod:
   stage: deploy
-  image: google/cloud-sdk:alpine
-  before_script:
-    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
-    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
-    - gcloud config set project your-project-id
   script:
-    - echo "Deploying to production environment..."
-    - gcloud app deploy --quiet --version prod
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd auth activate-service-account --key-file C:\Path\To\gcloud-key.json'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd config set project your-project-id'
+    - 'C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd app deploy --quiet --version prod'
   environment:
     name: production
     url: https://www.example.com  # URL for the production environment
