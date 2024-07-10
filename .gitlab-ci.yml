@@ -13,13 +13,13 @@ variables:
   GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
 
 before_script:
-  # Print the first 10 characters of GOOGLE_APPLICATION_CREDENTIALS to debug
+  # Debugging: Print the first 100 characters of GOOGLE_APPLICATION_CREDENTIALS
   - powershell -Command "Write-Output ($env:GOOGLE_APPLICATION_CREDENTIALS.Substring(0, [Math]::Min($env:GOOGLE_APPLICATION_CREDENTIALS.Length, 100)))"
 
   # Write the JSON key file from the GitLab CI/CD variable
-  - powershell -Command "Set-Content -Path '${GOOGLE_APPLICATION_CREDENTIALS_FILE}' -Value '$env:GOOGLE_APPLICATION_CREDENTIALS'"
+  - powershell -Command "Set-Content -Path '${GOOGLE_APPLICATION_CREDENTIALS_FILE}' -Value '$env:GOOGLE_APPLICATION_CREDENTIALS' -Force"
 
-  # Debugging step: Check if the file is created and has content
+  # Debugging: Check if the file is created and has content
   - powershell -Command "Test-Path '${GOOGLE_APPLICATION_CREDENTIALS_FILE}'"
   - powershell -Command "Get-Content '${GOOGLE_APPLICATION_CREDENTIALS_FILE}' | Select-Object -First 10"
 
