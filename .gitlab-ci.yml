@@ -14,13 +14,13 @@ variables:
 
 before_script:
   # Debugging step: Print the first 10 lines of the GOOGLE_APPLICATION_CREDENTIALS variable
-  - powershell -Command "Write-Output ($env:GOOGLE_APPLICATION_CREDENTIALS | Out-String | Select-Object -First 10)"
+  - powershell -Command "Write-Output \"$env:GOOGLE_APPLICATION_CREDENTIALS\" | Select-String -First 10"
 
   # Write the JSON key file from the GitLab CI/CD variable
-  - powershell -Command "Set-Content -Path ${GOOGLE_APPLICATION_CREDENTIALS_FILE} -Value $env:GOOGLE_APPLICATION_CREDENTIALS"
+  - powershell -Command "Set-Content -Path ${GOOGLE_APPLICATION_CREDENTIALS_FILE} -Value \"$env:GOOGLE_APPLICATION_CREDENTIALS\""
 
   # Debugging step: Check if the file is created and has content
-  - powershell -Command "Get-Item ${GOOGLE_APPLICATION_CREDENTIALS_FILE}"
+  - powershell -Command "Test-Path ${GOOGLE_APPLICATION_CREDENTIALS_FILE}"
   - powershell -Command "Get-Content ${GOOGLE_APPLICATION_CREDENTIALS_FILE} | Select-Object -First 10"
 
   # Authenticate Google Cloud SDK using the written JSON key file
