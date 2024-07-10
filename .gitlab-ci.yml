@@ -24,8 +24,9 @@ before_script:
   - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
 
   # Authenticate Google Cloud SDK using the JSON key file
-  - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
   - gcloud config set project ${PROJECT_ID}
+  - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+
 
   # Configure Docker to use Google Cloud Docker registry
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
