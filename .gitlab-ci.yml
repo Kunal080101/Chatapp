@@ -1,3 +1,5 @@
+image: google/cloud-sdk:slim
+
 stages:
   - build
   - test
@@ -16,8 +18,11 @@ before_script:
   # Write the JSON key content to a file
   - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
 
-  # Verify the content of the JSON key file (optional for debugging)
-  - type ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  # Output the content of the file to ensure it has been written correctly
+  - cat ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+
+  # Check file existence and permissions
+  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
 
   # Authenticate Google Cloud SDK using the JSON key file
   - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
