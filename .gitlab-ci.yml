@@ -6,6 +6,7 @@ stages:
   - deploy
 
 variables:
+  PROJECT_ID: regal-scholar-423322
   REGION: us-central1
   REPO: gitlab-app
   IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
@@ -24,9 +25,8 @@ before_script:
   - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
 
   # Authenticate Google Cloud SDK using the JSON key file
+  - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
   - gcloud config set project ${PROJECT_ID}
-  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com --key-file ./gcloud-key.json
-
 
   # Configure Docker to use Google Cloud Docker registry
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
