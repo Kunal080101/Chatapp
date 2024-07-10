@@ -1,12 +1,12 @@
 stages:
   - build
-  - test
+  - tests
   - deploy
 
 variables:
   FLASK_ENV: 'production'  # Default environment variable
 
-# Job to build and test the application
+# Job to build and tests the application
 build_and_test:
   stage: build
   image: python:3.9
@@ -22,7 +22,7 @@ build_and_test:
     - practice-1
 
 # Job to deploy to development environment
-Dev:
+dev:
   stage: deploy
   image: google/cloud-sdk:alpine
   before_script:
@@ -41,7 +41,7 @@ Dev:
     - practice-1
 
 # Job to deploy to testing environment
-Test:
+test:
   stage: deploy
   image: google/cloud-sdk:alpine
   before_script:
@@ -50,17 +50,17 @@ Test:
     - gcloud config set project your-project-id
   script:
     - echo "Deploying to testing environment..."
-    - gcloud app deploy --quiet --version test
+    - gcloud app deploy --quiet --version tests
   environment:
     name: testing
-    url: https://test.example.com  # URL for the test environment
+    url: https://test.example.com  # URL for the tests environment
   only:
     - merge_requests
   tags:
     - practice-1
 
 # Job to deploy to production environment
-Prod:
+prod:
   stage: deploy
   image: google/cloud-sdk:alpine
   before_script:
