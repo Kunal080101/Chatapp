@@ -12,20 +12,19 @@ variables:
   IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
   DOCKER_REGISTRY: ${REGION}-docker.pkg.dev
   IMAGE_NAME: ${DOCKER_REGISTRY}/${PROJECT_ID}/${REPO}/chatapp
-  GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
 
 before_script:
   # Write the JSON key content to a file
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS"
 
   # Output the content of the file to ensure it has been written correctly
-  - cat ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - cat ${GOOGLE_APPLICATION_CREDENTIALS}
 
   # Check file existence and permissions
-  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS}
 
   # Authenticate Google Cloud SDK using the JSON key file
-  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com  --key-file=gcloud-key.json
+  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com  --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
   - gcloud config set project ${PROJECT_ID}
 
   # Configure Docker to use Google Cloud Docker registry
