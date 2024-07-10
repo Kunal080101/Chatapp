@@ -7,32 +7,47 @@ variables:
   PROJECT_ID: regal-scholar-423322
   REGION: us-central1
   REPO: gitlab-app
+  IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
+  DOCKER_REGISTRY: ${REGION}-docker.pkg.dev
+  IMAGE_NAME: ${DOCKER_REGISTRY}/${PROJECT_ID}/${REPO}/chatapp
+  GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
+
+before_script:
+  # Write the JSON key file from the GitLab CI/CD variable
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+
+  # Authenticate Google Cloud SDK using the written JSON key file
+  - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - gcloud config set project ${PROJECT_ID}
+
+  # Configure Docker to use Google Cloud Docker registry
+  - gcloud auth configure-docker ${DOCKER_REGISTRY}
 
 build_image:
   stage: build
   script:
-    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
-    - docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG} .
-    - echo $GCLOUD_SERVICE_KEY | docker login -u _json_key --password-stdin https://${REGION}-docker.pkg.dev
-    - docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG}
-  artifacts:
-    paths:
-      - tests/report.xml
-    reports:
-      junit: tests/report.xml
+    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+    - docker push ${IMAGE_NAME}:${IMAGE_TAG}
+  tags:
+    - practice-1
+
+test:
+  stage: test
+  script:
+    - python -m pip install -r requirements.txt
+    - pytest
   tags:
     - practice-1
 
 deploy_to_dev:
   stage: deploy
   script:
-    - echo $GCLOUD_SERVICE_KEY | docker login -u _json_key --password-stdin https://${REGION}-docker.pkg.dev
-    - docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG}
-    - docker tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG} ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:dev
-    - docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:dev
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
+    - docker push ${IMAGE_NAME}:dev
   environment:
     name: development
-    url: https://dev.example.com  # URL for the dev environment
+    url: https://dev.example.com
   only:
     - develop
   tags:
@@ -41,13 +56,12 @@ deploy_to_dev:
 deploy_to_test:
   stage: deploy
   script:
-    - echo $GCLOUD_SERVICE_KEY | docker login -u _json_key --password-stdin https://${REGION}-docker.pkg.dev
-    - docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG}
-    - docker tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG} ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:test
-    - docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:test
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
+    - docker push ${IMAGE_NAME}:test
   environment:
     name: testing
-    url: https://test.example.com  # URL for the test environment
+    url: https://test.example.com
   only:
     - merge_requests
   tags:
@@ -56,13 +70,12 @@ deploy_to_test:
 deploy_to_prod:
   stage: deploy
   script:
-    - echo $GCLOUD_SERVICE_KEY | docker login -u _json_key --password-stdin https://${REGION}-docker.pkg.dev
-    - docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG}
-    - docker tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:${CI_COMMIT_REF_SLUG} ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:prod
-    - docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/chatapp:prod
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
+    - docker push ${IMAGE_NAME}:prod
   environment:
     name: production
-    url: https://www.example.com  # URL for the production environment
+    url: https://www.example.com
   only:
     - main
   tags:
