@@ -1,0 +1,52 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  FLASK_ENV: 'production'
+
+# Job to build and test the application
+build_and_test:
+  stage: build
+  image: python:3.9
+  script:
+    - pip install -r requirements.txt
+    - pytest tests/
+  artifacts:
+    paths:
+      - tests/report.xml
+    reports:
+      junit: tests/report.xml
+  tags:
+    - practice-1
+
+# Job to deploy to a test environment
+deploy_to_test:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
+    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
+    - gcloud config set project your-project-id
+  script:
+    - echo "Deploying to test environment..."
+    - gcloud app deploy --quiet
+  tags:
+    - practice-1
+
+# Job to deploy to production environment
+deploy_to_production:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo $GOOGLE_APPLICATION_CREDENTIALS > /tmp/gcloud-key.json
+    - gcloud auth activate-service-account --key-file /tmp/gcloud-key.json
+    - gcloud config set project your-project-id
+  script:
+    - echo "Deploying to production environment..."
+    - gcloud app deploy --quiet
+  only:
+    - main
+  tags:
+    - practice-1
