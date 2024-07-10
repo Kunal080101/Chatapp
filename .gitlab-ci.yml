@@ -13,15 +13,15 @@ variables:
   GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
 
 before_script:
-  # Debugging step: Print the content of GOOGLE_APPLICATION_CREDENTIALS to check it's correct
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS" | head -n 10  # Print the first 10 lines for debugging
+  # Debugging step: Print the first 10 lines of the GOOGLE_APPLICATION_CREDENTIALS variable
+  - powershell -Command "Write-Output ($env:GOOGLE_APPLICATION_CREDENTIALS | Out-String | Select-Object -First 10)"
 
   # Write the JSON key file from the GitLab CI/CD variable
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - powershell -Command "Set-Content -Path ${GOOGLE_APPLICATION_CREDENTIALS_FILE} -Value $env:GOOGLE_APPLICATION_CREDENTIALS"
 
   # Debugging step: Check if the file is created and has content
-  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
-  - cat ${GOOGLE_APPLICATION_CREDENTIALS_FILE} | head -n 10  # Print the first 10 lines for debugging
+  - powershell -Command "Get-Item ${GOOGLE_APPLICATION_CREDENTIALS_FILE}"
+  - powershell -Command "Get-Content ${GOOGLE_APPLICATION_CREDENTIALS_FILE} | Select-Object -First 10"
 
   # Authenticate Google Cloud SDK using the written JSON key file
   - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
