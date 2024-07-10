@@ -13,18 +13,18 @@ variables:
   GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
 
 before_script:
-  # Debugging: Print the first 100 characters of GOOGLE_APPLICATION_CREDENTIALS
-  - powershell -Command "Write-Output ($env:GOOGLE_APPLICATION_CREDENTIALS.Substring(0, [Math]::Min($env:GOOGLE_APPLICATION_CREDENTIALS.Length, 100)))"
+  # Debugging step: Print the content of GOOGLE_APPLICATION_CREDENTIALS to check it's correct
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS" | head -n 10  # Print the first 10 lines for debugging
 
   # Write the JSON key file from the GitLab CI/CD variable
-  - powershell -Command "Set-Content -Path '${GOOGLE_APPLICATION_CREDENTIALS_FILE}' -Value '$env:GOOGLE_APPLICATION_CREDENTIALS' -Force"
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
 
-  # Debugging: Check if the file is created and has content
-  - powershell -Command "Test-Path '${GOOGLE_APPLICATION_CREDENTIALS_FILE}'"
-  - powershell -Command "Get-Content '${GOOGLE_APPLICATION_CREDENTIALS_FILE}' | Select-Object -First 10"
+  # Debugging step: Check if the file is created and has content
+  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - cat ${GOOGLE_APPLICATION_CREDENTIALS_FILE} | head -n 10  # Print the first 10 lines for debugging
 
   # Authenticate Google Cloud SDK using the written JSON key file
-  - powershell -Command "gcloud auth activate-service-account --key-file='${GOOGLE_APPLICATION_CREDENTIALS_FILE}'"
+  - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
   - gcloud config set project ${PROJECT_ID}
 
   # Configure Docker to use Google Cloud Docker registry
