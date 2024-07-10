@@ -13,8 +13,15 @@ variables:
   GOOGLE_APPLICATION_CREDENTIALS_FILE: "gcloud-key.json"  # Path to write the key file
 
 before_script:
+  # Debugging step: Print the content of GOOGLE_APPLICATION_CREDENTIALS to check it's correct
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS" | head -n 10  # Print the first 10 lines for debugging
+
   # Write the JSON key file from the GitLab CI/CD variable
   - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+
+  # Debugging step: Check if the file is created and has content
+  - ls -l ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - cat ${GOOGLE_APPLICATION_CREDENTIALS_FILE} | head -n 10  # Print the first 10 lines for debugging
 
   # Authenticate Google Cloud SDK using the written JSON key file
   - gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
