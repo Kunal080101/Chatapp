@@ -6,7 +6,6 @@ stages:
   - deploy
 
 variables:
-  PROJECT_ID: regal-scholar-423322
   REGION: us-central1
   REPO: gitlab-app
   IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
