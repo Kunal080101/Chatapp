@@ -1,4 +1,4 @@
-image: google/cloud-sdk:slim
+image: python:3.9-slim
 
 stages:
   - build
@@ -22,68 +22,67 @@ before_script:
   - gcloud config set project ${PROJECT_ID}
 
   # Configure Docker to use Google Cloud Docker registry
-
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
-
   # Install Python
-  - sudo apt-get update
-  - sudo apt-get install -y python3 python3-pip
+  - apt-get update
+  - apt-get install -y python3 python3-pip
   - ln -s /usr/bin/python3 /usr/bin/python
 
 build_image:
-    stage: build
-    script:
-      - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-      - docker push ${IMAGE_NAME}:${IMAGE_TAG}
-    tags:
-      - practice-1
+  stage: build
+  script:
+    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+    - docker push ${IMAGE_NAME}:${IMAGE_TAG}
+  tags:
+    - practice-1
 
 test:
-    stage: test
-    script:
-      - python -m pip install -r requirements.txt
-      - pytest
-    tags:
-      - practice-1
+  stage: test
+  image: pyth
+  script:
+    - python -m pip install -r requirements.txt
+    - pytest
+  tags:
+    - practice-1
 
 deploy_to_dev:
-    stage: deploy
-    script:
-      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
-      - docker push ${IMAGE_NAME}:dev
-    environment:
-      name: development
-      url: https://dev.example.com
-    only:
-      - develop
-    tags:
-      - practice-1
+  stage: deploy
+  script:
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
+    - docker push ${IMAGE_NAME}:dev
+  environment:
+    name: development
+    url: https://dev.example.com
+  only:
+    - develop
+  tags:
+    - practice-1
 
 deploy_to_test:
-    stage: deploy
-    script:
-      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
-      - docker push ${IMAGE_NAME}:test
-    environment:
-      name: testing
-      url: https://test.example.com
-    only:
-      - merge_requests
-    tags:
-      - practice-1
+  stage: deploy
+  script:
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
+    - docker push ${IMAGE_NAME}:test
+  environment:
+    name: testing
+    url: https://test.example.com
+  only:
+    - merge_requests
+  tags:
+    - practice-1
 
 deploy_to_prod:
-    stage: deploy
-    script:
-      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
-      - docker push ${IMAGE_NAME}:prod
-    environment:
-      name: production
-      url: https://www.example.com
-    only:
-      - main
-    tags:
-      - practice-1
+  stage: deploy
+  script:
+    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
+    - docker push ${IMAGE_NAME}:prod
+  environment:
+    name: production
+    url: https://www.example.com
+  only:
+    - main
+  tags:
+    - practice-1
