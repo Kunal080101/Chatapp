@@ -1,4 +1,4 @@
-image: python:3.9-slim
+image: python:3.9
 
 stages:
   - build
@@ -14,8 +14,6 @@ variables:
   IMAGE_NAME: ${DOCKER_REGISTRY}/${PROJECT_ID}/${REPO}/chatapp
 
 before_script:
-  # Write the JSON key content to a file
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS"
 
   # Authenticate Google Cloud SDK using the JSON key file
   - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com  --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
@@ -23,14 +21,15 @@ before_script:
 
   # Configure Docker to use Google Cloud Docker registry
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
-  # Install Python
-  - apt-get update
-  - apt-get install -y python3 python3-pip
-  - ln -s /usr/bin/python3 /usr/bin/python
+
 
 build_image:
   stage: build
+  image: python:3.9-slim  # Make sure this image is correct
   script:
+    - apt-get update
+    - apt-get install -y python3 python3-pip
+    - ln -s /usr/bin/python3 /usr/bin/python
     - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
     - docker push ${IMAGE_NAME}:${IMAGE_TAG}
   tags:
