@@ -29,6 +29,7 @@ build_image:
 test:
   stage: test
   script:
+    - python app.py
     - python -m pip install -r requirements.txt
     - pytest
   tags:
