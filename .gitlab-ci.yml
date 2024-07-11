@@ -18,7 +18,7 @@ before_script:
   - gcloud config set project ${PROJECT_ID}
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
 
-build_image:
+dev:
   stage: build
   script:
     - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
@@ -34,35 +34,7 @@ test:
   tags:
     - practice-1
 
-deploy_to_dev:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
-    - docker push ${IMAGE_NAME}:dev
-  environment:
-    name: development
-    url: https://dev.example.com
-  only:
-    - develop
-  tags:
-    - practice-1
-
-deploy_to_test:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
-    - docker push ${IMAGE_NAME}:test
-  environment:
-    name: testing
-    url: https://test.example.com
-  only:
-    - merge_requests
-  tags:
-    - practice-1
-
-deploy_to_prod:
+prod:
   stage: deploy
   script:
     - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
@@ -71,7 +43,5 @@ deploy_to_prod:
   environment:
     name: production
     url: https://www.example.com
-  only:
-    - main
   tags:
     - practice-1
