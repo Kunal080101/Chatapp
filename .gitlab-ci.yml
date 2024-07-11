@@ -15,13 +15,14 @@ variables:
 
 before_script:
   # Write the JSON key content to a file
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS" > ${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - echo "$GOOGLE_APPLICATION_CREDENTIALS"
 
   # Authenticate Google Cloud SDK using the JSON key file
-  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com  --key-file=${GOOGLE_APPLICATION_CREDENTIALS_FILE}
+  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com  --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
   - gcloud config set project ${PROJECT_ID}
 
   # Configure Docker to use Google Cloud Docker registry
+
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
 
   # Install Python
@@ -30,59 +31,59 @@ before_script:
   - ln -s /usr/bin/python3 /usr/bin/python
 
 build_image:
-  stage: build
-  script:
-    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-    - docker push ${IMAGE_NAME}:${IMAGE_TAG}
-  tags:
-    - practice-1
+    stage: build
+    script:
+      - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+      - docker push ${IMAGE_NAME}:${IMAGE_TAG}
+    tags:
+      - practice-1
 
 test:
-  stage: test
-  script:
-    - python -m pip install -r requirements.txt
-    - pytest
-  tags:
-    - practice-1
+    stage: test
+    script:
+      - python -m pip install -r requirements.txt
+      - pytest
+    tags:
+      - practice-1
 
 deploy_to_dev:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
-    - docker push ${IMAGE_NAME}:dev
-  environment:
-    name: development
-    url: https://dev.example.com
-  only:
-    - develop
-  tags:
-    - practice-1
+    stage: deploy
+    script:
+      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:dev
+      - docker push ${IMAGE_NAME}:dev
+    environment:
+      name: development
+      url: https://dev.example.com
+    only:
+      - develop
+    tags:
+      - practice-1
 
 deploy_to_test:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
-    - docker push ${IMAGE_NAME}:test
-  environment:
-    name: testing
-    url: https://test.example.com
-  only:
-    - merge_requests
-  tags:
-    - practice-1
+    stage: deploy
+    script:
+      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:test
+      - docker push ${IMAGE_NAME}:test
+    environment:
+      name: testing
+      url: https://test.example.com
+    only:
+      - merge_requests
+    tags:
+      - practice-1
 
 deploy_to_prod:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
-    - docker push ${IMAGE_NAME}:prod
-  environment:
-    name: production
-    url: https://www.example.com
-  only:
-    - main
-  tags:
-    - practice-1
+    stage: deploy
+    script:
+      - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+      - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
+      - docker push ${IMAGE_NAME}:prod
+    environment:
+      name: production
+      url: https://www.example.com
+    only:
+      - main
+    tags:
+      - practice-1
