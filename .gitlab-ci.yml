@@ -29,7 +29,6 @@ build_image:
 test:
   stage: test
   script:
-    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe app.py'
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pytest'
   tags:
