@@ -1,7 +1,9 @@
 stages:
   - build
   - test
+  - quality
   - deploy
+
 
 variables:
   PROJECT_ID: regal-scholar-423322
@@ -10,6 +12,15 @@ variables:
   IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
   DOCKER_REGISTRY: ${REGION}-docker.pkg.dev
   IMAGE_NAME: ${DOCKER_REGISTRY}/${PROJECT_ID}/${REPO}/chatapp
+  GCR_IMAGE_NAME: gcr.io/${PROJECT_ID}/chat-app
+  APP_ENGINE_YAML: app.yaml
+  SONAR_TOKEN: your_sonarqube_token
+#  WIF_ACCOUNT: gitlab-cicd@${PROJECT_ID}.iam.gserviceaccount.com
+#  WORKLOAD_IDENTITY_POOL: "projects/your_project_number/locations/global/workloadIdentityPools/workload-identity-gitlab"
+#  IDENTITY_PROVIDER: "projects/your_project_number/locations/global/workloadIdentityPools/workload-identity-gitlab/providers/gitlab-provider"
+  APP_ENGINE_SERVICE_NAME: default
+  APP_ENGINE_VERSION: v1
+
 
 before_script:
   # Authenticate Google Cloud SDK using the JSON key file
@@ -34,6 +45,13 @@ test:
   tags:
     - practice-1
 
+sonarqube:
+  stage: quality
+  script:
+    - sonar-scanner -Dsonar.login=${SONAR_TOKEN}
+  only:
+    - master
+
 prod:
   stage: deploy
   script:
@@ -45,3 +63,8 @@ prod:
     url: https://www.example.com
   tags:
     - practice-1
+
+production:
+  stage: deploy
+  script:
+    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
