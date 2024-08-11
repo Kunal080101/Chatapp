@@ -35,7 +35,7 @@ dev:
     - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
     - docker push ${IMAGE_NAME}:${IMAGE_TAG}
   tags:
-    - practice-1
+    - private-1
 
 test:
   stage: test
@@ -43,7 +43,7 @@ test:
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pytest'
   tags:
-    - practice-1
+    - private-1
 
 sonarqube:
   stage: quality
@@ -51,6 +51,8 @@ sonarqube:
     - sonar-scanner -Dsonar.login=${SONAR_TOKEN}
   only:
     - master
+  tags:
+    - private-1
 
 prod:
   stage: deploy
@@ -62,9 +64,11 @@ prod:
     name: production
     url: https://www.example.com
   tags:
-    - practice-1
+    - private-1
 
 production:
   stage: deploy
   script:
     - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
+  tags:
+    - private-1
