@@ -64,7 +64,7 @@ prod:
   tags:
     - practice-1
 
-production:
+producton:
   stage: deploy
   script:
     - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
