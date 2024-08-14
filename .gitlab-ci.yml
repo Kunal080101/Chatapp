@@ -6,7 +6,7 @@ stages:
 
 
 variables:
-  PROJECT_ID: regal-scholar-423322
+  PROJECT_ID: gitlab-chatbot-431623
   REGION: us-central1
   REPO: gitlab-app
   IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
@@ -35,7 +35,7 @@ dev:
     - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
     - docker push ${IMAGE_NAME}:${IMAGE_TAG}
   tags:
-    - private-1
+    - appengine-runner
 
 test:
   stage: test
@@ -43,7 +43,7 @@ test:
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
     - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pytest'
   tags:
-    - private-1
+    - appengine-runner
 
 sonarqube:
   stage: quality
@@ -52,7 +52,7 @@ sonarqube:
   only:
     - master
   tags:
-    - private-1
+    - appengine-runner
 
 prod:
   stage: deploy
@@ -64,11 +64,11 @@ prod:
     name: production
     url: https://www.example.com
   tags:
-    - private-1
+    - appengine-runner
 
 production:
   stage: deploy
   script:
     - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
   tags:
-    - private-1
+    - appengine-runner
