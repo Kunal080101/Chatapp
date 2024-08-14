@@ -25,7 +25,7 @@ variables:
 before_script:
   # Authenticate Google Cloud SDK using the JSON key file
   - echo "$GOOGLE_APPLICATION_CREDENTIALS"
-  - gcloud auth activate-service-account gitlab-ci-service-account@regal-scholar-423322-h0.iam.gserviceaccount.com --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+  - gcloud auth activate-service-account gitlab-cicd@gitlab-chatbot-431623.iam.gserviceaccount.com --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
   - gcloud config set project ${PROJECT_ID}
   - gcloud auth configure-docker ${DOCKER_REGISTRY}
 
