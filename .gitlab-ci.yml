@@ -95,7 +95,7 @@ deploy-job:
         # Pull (download) the docker image from the artifact registry
         - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
 
-        - docker run -d -p 7001:7001 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+        - docker run -d -p 5001:5001 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
     needs:
       - ["publish-image"]
 
