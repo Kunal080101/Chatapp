@@ -110,4 +110,4 @@ production:
     - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
 
   needs:
-      - ["production"]
+      - ["publish-image"]
