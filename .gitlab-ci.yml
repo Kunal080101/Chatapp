@@ -1,74 +1,103 @@
+# Stages of the pipeline (each stage can be a series of jobs)
 stages:
   - build
   - test
-  - quality
   - deploy
 
-
+# Global variables of the pipeline
 variables:
-  PROJECT_ID: gitlab-chatbot-431623
-  REGION: us-central1
-  REPO: gitlab-app
-  IMAGE_TAG: ${CI_COMMIT_REF_SLUG}  # Use branch name or commit SHA as the image tag
-  DOCKER_REGISTRY: ${REGION}-docker.pkg.dev
-  IMAGE_NAME: ${DOCKER_REGISTRY}/${PROJECT_ID}/${REPO}/chatapp
-  GCR_IMAGE_NAME: gcr.io/${PROJECT_ID}/chat-app
-  APP_ENGINE_YAML: app.yaml
-  SONAR_TOKEN: your_sonarqube_token
-#  WIF_ACCOUNT: gitlab-cicd@${PROJECT_ID}.iam.gserviceaccount.com
-#  WORKLOAD_IDENTITY_POOL: "projects/your_project_number/locations/global/workloadIdentityPools/workload-identity-gitlab"
-#  IDENTITY_PROVIDER: "projects/your_project_number/locations/global/workloadIdentityPools/workload-identity-gitlab/providers/gitlab-provider"
-  APP_ENGINE_SERVICE_NAME: default
-  APP_ENGINE_VERSION: v1
+  IMAGE_NAME: chatapp
+  REPO_TAG: registry.gitlab.com/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME
+  GCP_ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  GCP_TAG: us-central1-docker.pkg.dev/argocd-demo-432200/gitlab-repo
+  RUNNER_TAG: chatapp  # public-runner
 
 
 before_script:
-  # Authenticate Google Cloud SDK using the JSON key file
-  - echo "$GOOGLE_APPLICATION_CREDENTIALS"
-  - gcloud auth activate-service-account gitlab-cicd@gitlab-chatbot-431623.iam.gserviceaccount.com --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
-  - gcloud config set project ${PROJECT_ID}
-  - gcloud auth configure-docker ${DOCKER_REGISTRY}
+  - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+  - gcloud auth configure-docker $GCP_ARTIFACT_REGISTRY
 
-dev:
-  stage: build
-  script:
-    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-    - docker push ${IMAGE_NAME}:${IMAGE_TAG}
-  tags:
-    - appengine-runner
 
-test:
-  stage: test
-  script:
-    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pip install -r requirements.txt'
-    - 'C:\Users\ashwa\AppData\Local\Programs\Python\Python312\python.exe -m pytest'
-  tags:
-    - appengine-runner
 
-sonarqube:
-  stage: quality
-  script:
-    - sonar-scanner -Dsonar.login=${SONAR_TOKEN}
-  only:
-    - master
-  tags:
-    - appengine-runner
+# https://gitlab.com/gitlab-org/gitlab/-/tree/master/lib/gitlab/ci/templates/Jobs
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
-prod:
-  stage: deploy
-  script:
-    - docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-    - docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:prod
-    - docker push ${IMAGE_NAME}:prod
-  environment:
-    name: production
-    url: https://www.example.com
-  tags:
-    - appengine-runner
+# Default image of the jobs
+# image: python:3.9
 
-production:
-  stage: deploy
-  script:
-    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
-  tags:
-    - appengine-runner
+# A job needs minimum 2 arguments and those are "stage" and t"
+build-job:
+    stage: "build"
+    # Variables that are defined inside a job only work within the job
+    variables:
+      IMAGE_TAG: "v1"
+    # tag allows us to select a specific runner for a job
+    tags: [$RUNNER_TAG]
+    script:
+        # Authenticate to the container registry
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+        - "echo The build is happening now!"
+
+
+        # Dynamically assigning the image name and image tag
+        - docker build -t ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
+
+        # Add the docker image to the container registry
+        - docker push ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+
+
+#         Build docker images for Artifact registry
+        - docker build -t ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
+#         Push docker images for Artifact registry
+        - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+
+secret_detection:
+    stage: test
+    needs:
+      - ["build-job"]
+
+semgrep-sast:
+    stage: test
+    needs:
+      - ["build-job"]
+
+container_scanning:
+    stage: test
+    variables:
+      GIT_STRATEGY: clone
+      CS_IMAGE: ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+      CS_DOCKERFILE_PATH: ./Dockerfile
+      SECURE_LOG_LEVEL: 'info'
+    needs:
+      - ["build-job"]
+
+
+publish-image:
+    stage: deploy
+    tags: [$RUNNER_TAG]
+    script:
+      # docker image tag <previous_tag> <new_tag>
+      - docker image tag ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+      - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    needs:
+      - ["container_scanning", "secret_detection", "semgrep-sast"]
+
+deploy-job:
+    stage: deploy
+    tags: [$RUNNER_TAG]
+    script:
+        - "echo Deploying the code to the server!"
+
+        # Pull (download) the docker image from the artifact registry
+        - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+
+        - docker run -d -p 7001:7001 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    needs:
+      - ["publish-image"]
+
+
+
