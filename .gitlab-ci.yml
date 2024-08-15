@@ -11,6 +11,9 @@ variables:
   GCP_ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
   GCP_TAG: us-central1-docker.pkg.dev/argocd-demo-432200/gitlab-repo
   RUNNER_TAG: chatapp  # public-runner
+  APP_ENGINE_YAML: app.yaml
+#  APP_ENGINE_SERVICE_NAME: default
+  APP_ENGINE_VERSION: v1
 
 
 before_script:
@@ -100,4 +103,11 @@ deploy-job:
       - ["publish-image"]
 
 
+production:
+  stage: deploy
+  tags: [$RUNNER_TAG]
+  script:
+    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
 
+  needs:
+      - ["production"]
