@@ -5,6 +5,7 @@ default:
 stages:
   - build
   - test
+  - sonarqube
   - deploy
 
 variables:
@@ -51,6 +52,16 @@ container_scanning:
     CS_IMAGE: ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
     CS_DOCKERFILE_PATH: ./Dockerfile
     SECURE_LOG_LEVEL: 'info'
+  needs: ["build-job"]
+
+sonarqube-check:
+  stage: sonarqube
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  script:
+    - sonar-scanner -Dsonar.projectKey=$CI_PROJECT_NAME -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  allow_failure: true  # Optional: If you don't want the pipeline to fail if SonarQube check fails
   needs: ["build-job"]
 
 publish-image:
