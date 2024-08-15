@@ -86,7 +86,6 @@ sonarqube-vulnerability-report:
       sast: gl-sast-sonar-report.json
 
 
-
 publish-image:
   stage: deploy
   tags: [$RUNNER_TAG]
@@ -95,14 +94,6 @@ publish-image:
     - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
   needs: ["container_scanning", "secret_detection", "semgrep-sast", "sonarqube-vulnerability-report"]
 
-#deploy-job:
-#  stage: deploy
-#  tags: [$RUNNER_TAG]
-#  script:
-#    - echo "Deploying the code to the server!"
-#    - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-#    - docker run -d -p 5000:5000 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-#  needs: ["publish-image"]
 staging:
   stage: deploy
   tags: [$RUNNER_TAG]

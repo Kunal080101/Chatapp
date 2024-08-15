@@ -8,11 +8,6 @@ handlers:
   - url: /.*
     script: auto
 
-#env_variables:
-##   Path to your key file
-##  KEY_FILE_PATH: '/tmp/gcp-key.json'
-##   Remove DATABASE_URL if not used
-##   DATABASE_URL: 'postgresql://postgres:Ashu123@34.72.51.3/postgres'
 
 # Optional: Instance class and automatic scaling settings
 instance_class: F2  # Choose an instance class, F2 is a reasonable starting point
