@@ -5,7 +5,8 @@ default:
 stages:
   - build
   - test
-  - sonarqube
+  - sonarqube-check
+  - sonarqube-vulnerability-report
   - deploy
 
 variables:
@@ -16,6 +17,8 @@ variables:
   RUNNER_TAG: chatapp
   APP_ENGINE_YAML: app.yaml
   APP_ENGINE_VERSION: chatapp
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
 before_script:
   - if [ -x "$(command -v gcloud)" ]; then gcloud auth activate-service-account --key-file=/tmp/gcp-key.json; fi
@@ -55,14 +58,31 @@ container_scanning:
   needs: ["build-job"]
 
 sonarqube-check:
-  stage: sonarqube
-  image:
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
+  stage: sonarqube-check
+  image: sonarsource/sonar-scanner-cli:latest
   script:
-    - sonar-scanner -Dsonar.projectKey=$CI_PROJECT_NAME -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
-  allow_failure: true  # Optional: If you don't want the pipeline to fail if SonarQube check fails
-  needs: ["build-job"]
+    - sonar-scanner -Dsonar.projectKey=chat-app
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'develop'
+
+sonarqube-vulnerability-report:
+  stage: sonarqube-vulnerability-report
+  script:
+    - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=chat-app&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'develop'
+  artifacts:
+    expire_in: 1 day
+    reports:
+      sast: gl-sast-sonar-report.json
 
 publish-image:
   stage: deploy
@@ -70,7 +90,7 @@ publish-image:
   script:
     - docker image tag ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
     - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-  needs: ["container_scanning", "secret_detection", "semgrep-sast"]
+  needs: ["container_scanning", "secret_detection", "semgrep-sast", "sonarqube-vulnerability-report"]
 
 deploy-job:
   stage: deploy
