@@ -71,8 +71,8 @@ sonarqube-check:
 
 sonarqube-vulnerability-report:
   stage: sonarqube-vulnerability-report
-  image: google/cloud-sdk:latest
   script:
+    - echo "$GCP_SERVICE_KEY" > /tmp/gcp-key.json
     - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=chat-app&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
   allow_failure: true
   rules:
