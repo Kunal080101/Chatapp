@@ -13,7 +13,7 @@ variables:
   RUNNER_TAG: chatapp  # public-runner
   APP_ENGINE_YAML: app.yaml
 #  APP_ENGINE_SERVICE_NAME: default
-  APP_ENGINE_VERSION: v1
+  APP_ENGINE_VERSION: chatapp
 
 
 before_script:

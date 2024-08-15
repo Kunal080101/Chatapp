@@ -1,5 +1,5 @@
 runtime: python39  # Use the Python 3.9 runtime
-entrypoint: gunicorn -b :$PORT main:app  # Command to run your application
+entrypoint: gunicorn -b :$PORT app:app  # Command to run your application
 
 handlers:
   - url: /static
@@ -19,5 +19,5 @@ instance_class: F2  # Choose an instance class, F2 is a reasonable starting poin
 
 automatic_scaling:
   target_cpu_utilization: 0.65
-  min_instances: 1
-  max_instances: 2
+  min_instances: 2
+  max_instances: 4
