@@ -1,113 +1,78 @@
-# Stages of the pipeline (each stage can be a series of jobs)
+# Default image for jobs that don't require specific images
+default:
+  image: google/cloud-sdk:latest  # For jobs that need gcloud
+
 stages:
   - build
   - test
   - deploy
 
-# Global variables of the pipeline
 variables:
   IMAGE_NAME: chatapp
   REPO_TAG: registry.gitlab.com/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME
   GCP_ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
   GCP_TAG: us-central1-docker.pkg.dev/argocd-demo-432200/gitlab-repo
-  RUNNER_TAG: chatapp  # public-runner
+  RUNNER_TAG: chatapp
   APP_ENGINE_YAML: app.yaml
-#  APP_ENGINE_SERVICE_NAME: default
   APP_ENGINE_VERSION: chatapp
 
-
 before_script:
-  - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
-  - gcloud auth configure-docker $GCP_ARTIFACT_REGISTRY
+  - if [ -x "$(command -v gcloud)" ]; then gcloud auth activate-service-account --key-file=/tmp/gcp-key.json; fi
+  - if [ -x "$(command -v gcloud)" ]; then gcloud auth configure-docker $GCP_ARTIFACT_REGISTRY; fi
 
-
-
-# https://gitlab.com/gitlab-org/gitlab/-/tree/master/lib/gitlab/ci/templates/Jobs
 include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Container-Scanning.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
 
-# Default image of the jobs
-# image: python:3.9
-
-# A job needs minimum 2 arguments and those are "stage" and t"
 build-job:
-    stage: "build"
-    # Variables that are defined inside a job only work within the job
-    variables:
-      IMAGE_TAG: "v1"
-    # tag allows us to select a specific runner for a job
-    tags: [$RUNNER_TAG]
-    script:
-        # Authenticate to the container registry
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-        - "echo The build is happening now!"
-
-
-        # Dynamically assigning the image name and image tag
-        - docker build -t ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
-
-        # Add the docker image to the container registry
-        - docker push ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-
-
-#         Build docker images for Artifact registry
-        - docker build -t ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
-#         Push docker images for Artifact registry
-        - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+  stage: build
+  tags: [$RUNNER_TAG]
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "The build is happening now!"
+    - docker build -t ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker push ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - docker build -t ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} .
+    - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
 
 secret_detection:
-    stage: test
-    needs:
-      - ["build-job"]
+  stage: test
+  needs: ["build-job"]
 
 semgrep-sast:
-    stage: test
-    needs:
-      - ["build-job"]
+  stage: test
+  needs: ["build-job"]
 
 container_scanning:
-    stage: test
-    variables:
-      GIT_STRATEGY: clone
-      CS_IMAGE: ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-      CS_DOCKERFILE_PATH: ./Dockerfile
-      SECURE_LOG_LEVEL: 'info'
-    needs:
-      - ["build-job"]
-
+  stage: test
+  variables:
+    GIT_STRATEGY: clone
+    CS_IMAGE: ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    CS_DOCKERFILE_PATH: ./Dockerfile
+    SECURE_LOG_LEVEL: 'info'
+  needs: ["build-job"]
 
 publish-image:
-    stage: deploy
-    tags: [$RUNNER_TAG]
-    script:
-      # docker image tag <previous_tag> <new_tag>
-      - docker image tag ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-      - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-    needs:
-      - ["container_scanning", "secret_detection", "semgrep-sast"]
+  stage: deploy
+  tags: [$RUNNER_TAG]
+  script:
+    - docker image tag ${REPO_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+  needs: ["container_scanning", "secret_detection", "semgrep-sast"]
 
 deploy-job:
-    stage: deploy
-    tags: [$RUNNER_TAG]
-    script:
-        - "echo Deploying the code to the server!"
-
-        # Pull (download) the docker image from the artifact registry
-        - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-
-        - docker run -d -p 5000:5000 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-    needs:
-      - ["publish-image"]
-
+  stage: deploy
+  tags: [$RUNNER_TAG]
+  script:
+    - echo "Deploying the code to the server!"
+    - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - docker run -d -p 5000:5000 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+  needs: ["publish-image"]
 
 production:
   stage: deploy
   tags: [$RUNNER_TAG]
   script:
     - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
-
-  needs:
-      - ["publish-image"]
+  needs: ["publish-image"]
