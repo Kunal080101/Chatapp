@@ -74,7 +74,7 @@ sonarqube-vulnerability-report:
   image: sonarsource/sonar-scanner-cli:latest
   script:
 #    - sonar-scanner -Dsonar.projectKey=chat-app
-    - apt-get update && apt-get install -y curl
+    - sudo apt-get update && apt-get install -y curl
 #    - echo "$GCP_SERVICE_KEY" > /tmp/gcp-key.json
     - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=chat-app&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
   allow_failure: true
