@@ -21,6 +21,8 @@ variables:
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
 before_script:
+  - echo "$GCP_SERVICE_KEY" > /tmp/gcp-key.json
+  - cat /temp/gcp-key.json
   - if [ -x "$(command -v gcloud)" ]; then gcloud auth activate-service-account --key-file=/tmp/gcp-key.json; fi
   - if [ -x "$(command -v gcloud)" ]; then gcloud auth configure-docker $GCP_ARTIFACT_REGISTRY; fi
 
