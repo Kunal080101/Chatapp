@@ -16,7 +16,8 @@ variables:
   GCP_TAG: us-central1-docker.pkg.dev/argocd-demo-432200/gitlab-repo
   RUNNER_TAG: chatapp
   APP_ENGINE_YAML: app.yaml
-  APP_ENGINE_VERSION: chatapp
+  APP_ENGINE_STAGE_VERSION: chatapp-stage
+  APP_ENGINE_PROD_VERSION: chatapp-prod
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
@@ -86,7 +87,6 @@ sonarqube-vulnerability-report:
 
 
 
-
 publish-image:
   stage: deploy
   tags: [$RUNNER_TAG]
@@ -95,18 +95,24 @@ publish-image:
     - docker push ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
   needs: ["container_scanning", "secret_detection", "semgrep-sast", "sonarqube-vulnerability-report"]
 
-deploy-job:
+#deploy-job:
+#  stage: deploy
+#  tags: [$RUNNER_TAG]
+#  script:
+#    - echo "Deploying the code to the server!"
+#    - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+#    - docker run -d -p 5000:5000 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+#  needs: ["publish-image"]
+staging:
   stage: deploy
   tags: [$RUNNER_TAG]
   script:
-    - echo "Deploying the code to the server!"
-    - docker pull ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-    - docker run -d -p 5000:5000 ${GCP_TAG}/${IMAGE_NAME}:${CI_COMMIT_SHA}
+    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_STAGE_VERSION}
   needs: ["publish-image"]
 
 production:
   stage: deploy
   tags: [$RUNNER_TAG]
   script:
-    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_VERSION}
+    - gcloud app deploy ${APP_ENGINE_YAML} --quiet --version ${APP_ENGINE_PROD_VERSION}
   needs: ["publish-image"]
