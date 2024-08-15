@@ -73,9 +73,10 @@ sonarqube-vulnerability-report:
   stage: sonarqube-vulnerability-report
   image: sonarsource/sonar-scanner-cli:latest
   script:
-    - sudo apt-get update && apt-get install -y wget  # Install wget if not available
+    - apt-get update && apt-get install -y wget  # Install full wget if needed
     - |
-      wget --http-user="${SONAR_TOKEN}" --output-document=gl-sast-sonar-report.json \
+      wget --header="Authorization: Basic $(echo -n ${SONAR_TOKEN}: | base64)" \
+      --output-document=gl-sast-sonar-report.json \
       "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=chat-app&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}"
   allow_failure: true
   artifacts:
