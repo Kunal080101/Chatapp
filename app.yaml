@@ -3,7 +3,7 @@ entrypoint: gunicorn -b :$PORT app:app  # Command to run your application
 
 handlers:
   - url: /static
-    static_dir: static
+    static_dir: app/static  # Point to your static directory
 
   - url: /.*
     script: auto
