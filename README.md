@@ -46,19 +46,14 @@ Setup
 
 Clone the repository:
 
-bash
-Copy code
-git clone https://gitlab.com/your-username/chatbot-app.git
-cd chatbot-app
+git clone https://gitlab.com/c08951392grp1/chatapplication.git
 
 Install the dependencies:
 
-bash
 pip install -r requirements.txt
 
 Run the application locally:
 
-bash
 flask run
 
 Usage
